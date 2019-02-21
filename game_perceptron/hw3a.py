@@ -64,6 +64,7 @@ def h(x,w):
         return 1
     else:
         return 0
+
 def accuracy(w,x,y):
     true = 0
     for i in range(len(y)):
@@ -74,11 +75,12 @@ def accuracy(w,x,y):
 
 # acc is accuracy list[[],[],[],[]]. 0 is current model on train, 1 is average model on train,
 # 2 is current model on test, 3 is average model on test
-acc = [[],[],[],[]]
-# trainning iteration
-w = np.zeros([len(x_train[0])])
-t = np.zeros([len(x_train[0])])
-def iteration(acc,x_train,x_test,w,t,iter):
+
+def iteration(x_train,x_test,iter):
+    acc = [[],[],[],[]]
+    # trainning iteration
+    w = np.zeros([len(x_train[0])])
+    t = np.zeros([len(x_train[0])])
     for k in range(iter):
         for i in range(len(x_train)):
             change = y_train[i]-h(x_train[i],w)
@@ -89,9 +91,9 @@ def iteration(acc,x_train,x_test,w,t,iter):
             acc[1].append(accuracy(ta,x_train,y_train))
             acc[2].append(accuracy(w,x_test,y_test))
             acc[3].append(accuracy(ta,x_test,y_test))
-    return w,ta
+    return acc,w,ta
 
-w,ta = iteration(acc,x_train,x_test,w,t,1)
+acc,w,ta = iteration(x_train,x_test,1)
 
 
 def plotaccuracy(acc,title):
@@ -101,7 +103,7 @@ def plotaccuracy(acc,title):
     plt.plot(acc[3],label = "average model on test")
     plt.legend()
     plt.ylabel("accuracy")
-    plt.xlabel("number of trainning -1 (L*n)")
+    plt.xlabel("number of weights update (L*n)")
     plt.title(title)
     plt.show()
 plotaccuracy(acc,"prediction")
@@ -129,7 +131,7 @@ def subplotaccuracy(acc,axes,fig,i,title):
     axes[x, y].plot(acc[3],label = "average model on test")
     #axes[int(i/2), i-2*int(i/2)].legend()
     axes[x, y].set_ylabel("accuracy")
-    axes[x, y].set_xlabel("number of trainning -1 (L*n)")
+    axes[x, y].set_xlabel("number of weights update -1 (L*n)")
     axes[x, y].set_title(title)
 
 # ablation test
