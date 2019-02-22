@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-
 # convert a attribute file into attribute list: [[typename],[type1,type2,type3],[1,2,3]]
 attribute = []
 attribute.append([["x0"],[0],[1]])
@@ -60,6 +58,7 @@ def vectorize2(filename):
 x_train, y_train = vectorize1('game_attrdata_train.dat')
 x_test, y_test = vectorize1('game_attrdata_test.dat')
 
+#Q_b
 def h(x,w):
     if np.dot(w,x)>= 0:
         return 1
@@ -75,12 +74,11 @@ def accuracy(w,x,y):
     accuracy = true/len(x)
     return accuracy
 
-# acc is accuracy list[[],[],[],[]]. 0 is current model on train, 1 is average model on train,
-# 2 is current model on test, 3 is average model on test
-
 def iteration(x_train,x_test,iter):
     acc = [[],[],[],[]]
-    # trainning iteration
+# acc is accuracy list[[],[],[],[]]. 0 is current model on train, 1 is average model on train,
+# 2 is current model on test, 3 is average model on test
+# trainning iteration
     w = np.zeros([len(x_train[0])])
     t = np.zeros([len(x_train[0])])
     ta = np.zeros([len(x_train[0])])
@@ -90,7 +88,7 @@ def iteration(x_train,x_test,iter):
             change = y_train[i]-h(x_train[i],w)
             w = w+ np.multiply(x_train[i], change)
             t = t + w
-        if (k+1)% 1 == 0:
+        if (k+1)% 1 == 0: #help to trim the plot
             ta = np.multiply(t, 1/((k+1)*(i+1)))
             x.append(k+1)
             acc[0].append(accuracy(w,x_train,y_train))
@@ -100,7 +98,6 @@ def iteration(x_train,x_test,iter):
     return acc,w,ta,x
 
 acc,w,ta,x = iteration(x_train,x_test,250)
-
 
 def plotaccuracy(acc,title,x):
     plt.plot(x,acc[0],label = "cur on train")
@@ -114,7 +111,6 @@ def plotaccuracy(acc,title,x):
     plt.show()
 plotaccuracy(acc,"prediction",x)
 
-#Q_b
 print("""
 b)
 Average model works better than current model both on train set and test set
@@ -129,32 +125,31 @@ def Q_c(x_train,x_test,acc,attribute,x):
     math_d = ""
     wmax = 0
     max_index = 0
+    X = ["x0",'Weekday', 'Saturday', 'Sunday', 'morning', 'afternoon', 'evening','<30', '30-60', '>60', 'silly', 'happy', 'tired', 'friendsVisiting','kidsPlaying', 'atHome', 'snacks']
     for i in range(len(ta)):
         if i ==0:
             pos = i
         elif 11>i >0:
-            pos = int((i+1)/3)
+            pos = int((i+1)/3)+1
         else:
             pos = int((i-7))
         if abs(ta[i])>wmax:
             max_index=pos
             wmax = ta[i]
         if i==0 or ta[i]<0:
-            math_d += str(ta[i])+attribute[pos][0][0]+" "
+            math_d += str(ta[i])+X[i]+" "
         elif ta[i] >=0:
-            math_d += "+"+str(ta[i])+attribute[pos][0][0]+" "
+            math_d += "+"+str(ta[i])+X[i]+" "
     print(
     """
     so the math description of decision function is w·X = %s
     where threshold is 0, if bigger than threshold then predict value is SettersOfCatan, and otherwise
     X = [1,'Weekday', 'Saturday', 'Sunday', 'morning', 'afternoon', 'evening','<30', '30-60', '>60', 'silly', 'happy', 'tired', 'friendsVisiting','kidsPlaying', 'atHome', 'snacks']
     the attribute %s plays the most important role that have coeffecient %d
-    """%(math_d,attribute[max_index][0][0],wmax)
+    """%(math_d,attribute[max_index][0],wmax)
     )
 
-
 Q_c(x_train,x_test,acc,attribute,x)
-
 
 def subplotaccuracy(acc,axes,fig,i,title,xx):
     x = int(i/2)
@@ -174,7 +169,6 @@ def ablation(x_train,x_test):
     print("d)")
     for i in range(8):
         acc = [[],[],[],[]]
-
         if i*3 <12:
             x_trim1 = [x[0:(i)*3+1]+x[(i+1)*3+1:] for x in x_train]
             x_trim2 = [x[0:(i)*3+1]+x[(i+1)*3+1:] for x in x_test]
@@ -195,7 +189,6 @@ def ablation(x_train,x_test):
 ablation(x_train,x_test)
 
 print("""
-
 e) Examine the weights is better because it's more easy to find out the most important attribute than ablation test, with more efficiency and accuracy. Also if the weights are close on the influential attributes it's hard to figure out just by ablation test. Simply comparing different accuracy by ablation test is not fair because with different attributes the models are different.
 
 f) The averaged model should be better because it generalize better to test data than the final train model.
