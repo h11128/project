@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # convert a attribute file into attribute list: [[typename],[type1,type2,type3],[1,2,3]]
 attribute = []
-attribute.append([[0],[0],[1]])
+attribute.append([["x0"],[0],[1]])
 print("attribute list")
 with open('game_attributes.txt', 'r', encoding='utf-8') as attributes:
     for line in attributes:
@@ -32,7 +32,7 @@ def vectorize1(filename):
                     value = attribute[i+1][2][index]
                     vector.append(value)
                 else:
-                    y.append(value)
+                    y.append(index)
             x.append(vector)
         return x,y
 
@@ -47,12 +47,13 @@ def vectorize2(filename):
             line = [x.strip() for x in line.split(',')]
             vector = []
             for i in range(len(line)):
-                index = attribute[i][1].index(line[i])
-                value = attribute[i][2][index]
+
+                index = attribute[i+1][1].index(line[i])
+                value = attribute[i+1][2][index]
                 if i <len(line)-1:
                     vector.append(value)
                 else:
-                    y.append(value)
+                    y.append(index)
             x.append(vector)
         return x,y
 
@@ -67,6 +68,7 @@ def h(x,w):
 
 def accuracy(w,x,y):
     true = 0
+    accuracy = 0
     for i in range(len(y)):
         if h(x[i],w) == y[i]:
             true+= 1
@@ -81,62 +83,95 @@ def iteration(x_train,x_test,iter):
     # trainning iteration
     w = np.zeros([len(x_train[0])])
     t = np.zeros([len(x_train[0])])
+    ta = np.zeros([len(x_train[0])])
+    x = []
     for k in range(iter):
         for i in range(len(x_train)):
             change = y_train[i]-h(x_train[i],w)
             w = w+ np.multiply(x_train[i], change)
             t = t + w
+        if (k+1)% 1 == 0:
             ta = np.multiply(t, 1/((k+1)*(i+1)))
+            x.append(k+1)
             acc[0].append(accuracy(w,x_train,y_train))
             acc[1].append(accuracy(ta,x_train,y_train))
             acc[2].append(accuracy(w,x_test,y_test))
             acc[3].append(accuracy(ta,x_test,y_test))
-    return acc,w,ta
+    return acc,w,ta,x
 
-acc,w,ta = iteration(x_train,x_test,1)
+acc,w,ta,x = iteration(x_train,x_test,250)
 
 
-def plotaccuracy(acc,title):
-    plt.plot(acc[0],label = "current model on train")
-    plt.plot(acc[1],label = "average model on train")
-    plt.plot(acc[2],label = "current model on test")
-    plt.plot(acc[3],label = "average model on test")
+def plotaccuracy(acc,title,x):
+    plt.plot(x,acc[0],label = "cur on train")
+    plt.plot(x,acc[1],label = "ave on train")
+    plt.plot(x,acc[2],label = "cur on test")
+    plt.plot(x,acc[3],label = "ave on test")
     plt.legend()
     plt.ylabel("accuracy")
-    plt.xlabel("number of weights update (L*n)")
+    plt.xlabel("number of training epoch")
     plt.title(title)
     plt.show()
-plotaccuracy(acc,"prediction")
-# " the current model work better than the average model"
+plotaccuracy(acc,"prediction",x)
 
-print(w,ta)
+#Q_b
 print("""
 b)
-accuracy of averaged model on the train set is lower, all other accuracy can achieve 100%
-
-c)
-for the best model w is [-2. -1.  0. -1.  0. -1. -1.  0.  0. -2.  0. -1. -1.  0.  0. -1.  8.]
-so the math description of decision function is w·X = 8x15-x1-x3-x5-x6-2x9-x11-x12-x15-2
-where threshold is 0, if bigger than threshold then predict value is SettersOfCatan, and otherwise
-X = [1,'Weekday', 'Saturday', 'Sunday', 'morning', 'afternoon', 'evening','<30', '30-60', '>60', 'silly', 'happy', 'tired', 'friendsVisiting','kidsPlaying', 'atHome', 'snacks']
-the attribute snacks plays the most important role that have coeffecient 10
+Average model works better than current model both on train set and test set
 """)
 
-def subplotaccuracy(acc,axes,fig,i,title):
+def Q_c(x_train,x_test,acc,attribute,x):
+    ymax = max(acc[3])
+    pos = acc[3].index(ymax)
+    xmax = x[pos]
+    acc,w,ta,x = iteration(x_train,x_test,xmax)
+    print("c)\nafter",xmax,"training epoch the best model is\n",ta)
+    math_d = ""
+    wmax = 0
+    max_index = 0
+    for i in range(len(ta)):
+        if i ==0:
+            pos = i
+        elif 11>i >0:
+            pos = int((i+1)/3)
+        else:
+            pos = int((i-7))
+        if abs(ta[i])>wmax:
+            max_index=pos
+            wmax = ta[i]
+        if i==0 or ta[i]<0:
+            math_d += str(ta[i])+attribute[pos][0][0]+" "
+        elif ta[i] >=0:
+            math_d += "+"+str(ta[i])+attribute[pos][0][0]+" "
+    print(
+    """
+    so the math description of decision function is w·X = %s
+    where threshold is 0, if bigger than threshold then predict value is SettersOfCatan, and otherwise
+    X = [1,'Weekday', 'Saturday', 'Sunday', 'morning', 'afternoon', 'evening','<30', '30-60', '>60', 'silly', 'happy', 'tired', 'friendsVisiting','kidsPlaying', 'atHome', 'snacks']
+    the attribute %s plays the most important role that have coeffecient %d
+    """%(math_d,attribute[max_index][0][0],wmax)
+    )
+
+
+Q_c(x_train,x_test,acc,attribute,x)
+
+
+def subplotaccuracy(acc,axes,fig,i,title,xx):
     x = int(i/2)
     y = i-2*int(i/2)
-    axes[x, y].plot(acc[0],label = "current model on train")
-    axes[x, y].plot(acc[1],label = "average model on train")
-    axes[x, y].plot(acc[2],label = "current model on test")
-    axes[x, y].plot(acc[3],label = "average model on test")
+    #axes[x, y].plot(xx,acc[0],label = "cur on train")
+    #axes[x, y].plot(xx,acc[1],label = "ave on train")
+    #axes[x, y].plot(xx,acc[2],label = "cur on test")
+    axes[x, y].plot(xx,acc[3],label = "ave on test")
     #axes[int(i/2), i-2*int(i/2)].legend()
     axes[x, y].set_ylabel("accuracy")
-    axes[x, y].set_xlabel("number of weights update -1 (L*n)")
+    axes[x, y].set_xlabel("number of training epoch")
     axes[x, y].set_title(title)
 
 # ablation test
 fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(8, 8))
 def ablation(x_train,x_test):
+    print("d)")
     for i in range(8):
         acc = [[],[],[],[]]
 
@@ -151,17 +186,17 @@ def ablation(x_train,x_test):
             x_trim2 = [x[0:9+i]for x in x_train]
         w = np.zeros([len(x_trim1[0])])
         t = np.zeros([len(x_trim2[0])])
-        w,ta = iteration(acc,x_trim1,x_trim2,w,t,1)
-        subplotaccuracy(acc,axes,fig,i,"Give out %s %s"%("attribute",attribute[i+1][0][0]))
+        acc,w,ta,xx = iteration(x_trim1,x_trim2,250)
+        print("without attribute",attribute[i+1][0],"accuracy:",acc[3][-1])
+        subplotaccuracy(acc,axes,fig,i,"Give out %s %s"%("attribute",attribute[i+1][0][0]),xx)
     fig.tight_layout()
     plt.show()
 
 ablation(x_train,x_test)
 
 print("""
-d)From the subplot above we can find that the attribute snacks plays the most importnat role for the class decision.
 
-e)Examine the weights because it's more easy to find out the most important attribute than ablation test. Also if the weights are close on the influential attributes it's hard to figure out just by ablation test.
+e) Examine the weights is better because it's more easy to find out the most important attribute than ablation test, with more efficiency and accuracy. Also if the weights are close on the influential attributes it's hard to figure out just by ablation test. Simply comparing different accuracy by ablation test is not fair because with different attributes the models are different.
 
-(f) The averaged model should be better because it generalize better to test data than the final train model.
+f) The averaged model should be better because it generalize better to test data than the final train model.
 """)
