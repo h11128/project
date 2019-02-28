@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+
+
 # convert a attribute file into attribute list: [[typename],[type1,type2,type3],[1,2,3]]
 attribute = []
 attribute.append([["x0"],[0],[1]])
@@ -58,7 +60,6 @@ def vectorize2(filename):
 x_train, y_train = vectorize1('game_attrdata_train.dat')
 x_test, y_test = vectorize1('game_attrdata_test.dat')
 
-#Q_b
 def h(x,w):
     if np.dot(w,x)>= 0:
         return 1
@@ -74,12 +75,11 @@ def accuracy(w,x,y):
     accuracy = true/len(x)
     return accuracy
 
-def iteration(x_train,x_test,iter):
-    acc = [[],[],[],[]]
 # acc is accuracy list[[],[],[],[]]. 0 is current model on train, 1 is average model on train,
 # 2 is current model on test, 3 is average model on test
-# trainning iteration
-    w = np.zeros([len(x_train[0])])
+def iteration(x_train,x_test,iter,w=np.zeros([len(x_train[0])])):
+    acc = [[],[],[],[]]
+    # trainning iteration
     t = np.zeros([len(x_train[0])])
     ta = np.zeros([len(x_train[0])])
     x = []
@@ -88,7 +88,7 @@ def iteration(x_train,x_test,iter):
             change = y_train[i]-h(x_train[i],w)
             w = w+ np.multiply(x_train[i], change)
             t = t + w
-        if (k+1)% 1 == 0: #help to trim the plot
+        if (k+1)% 1 == 0:
             ta = np.multiply(t, 1/((k+1)*(i+1)))
             x.append(k+1)
             acc[0].append(accuracy(w,x_train,y_train))
@@ -96,7 +96,6 @@ def iteration(x_train,x_test,iter):
             acc[2].append(accuracy(w,x_test,y_test))
             acc[3].append(accuracy(ta,x_test,y_test))
     return acc,w,ta,x
-
 acc,w,ta,x = iteration(x_train,x_test,250)
 
 def plotaccuracy(acc,title,x):
@@ -111,6 +110,7 @@ def plotaccuracy(acc,title,x):
     plt.show()
 plotaccuracy(acc,"prediction",x)
 
+#Q_b
 print("""
 b)
 Average model works better than current model both on train set and test set
@@ -121,7 +121,7 @@ def Q_c(x_train,x_test,acc,attribute,x):
     pos = acc[3].index(ymax)
     xmax = x[pos]
     acc,w,ta,x = iteration(x_train,x_test,xmax)
-    print("c)\nafter",xmax,"training epoch the best model is\n",ta)
+    print("c)\n the best model is\n",ta)
     math_d = ""
     wmax = 0
     max_index = 0
@@ -130,24 +130,24 @@ def Q_c(x_train,x_test,acc,attribute,x):
         if i ==0:
             pos = i
         elif 11>i >0:
-            pos = int((i+1)/3)+1
+            pos = int((i+1)/3)
         else:
             pos = int((i-7))
         if abs(ta[i])>wmax:
             max_index=pos
             wmax = ta[i]
         if i==0 or ta[i]<0:
-            math_d += str(ta[i])+X[i]+" "
+            math_d += str(ta[i])+"(%s) "%(X[i])
         elif ta[i] >=0:
-            math_d += "+"+str(ta[i])+X[i]+" "
+            math_d += "+"+str(ta[i])+"(%s) "%(X[i])
     print(
-    """
-    so the math description of decision function is w·X = %s
-    where threshold is 0, if bigger than threshold then predict value is SettersOfCatan, and otherwise
-    X = [1,'Weekday', 'Saturday', 'Sunday', 'morning', 'afternoon', 'evening','<30', '30-60', '>60', 'silly', 'happy', 'tired', 'friendsVisiting','kidsPlaying', 'atHome', 'snacks']
-    the attribute %s plays the most important role that have coeffecient %d
-    """%(math_d,attribute[max_index][0],wmax)
-    )
+"""
+so the math description of decision function is w·X = %s
+where threshold is 0, if bigger than threshold then predict value is SettersOfCatan, and otherwise
+X = ["x0",'Weekday', 'Saturday', 'Sunday', 'morning', 'afternoon', 'evening','<30', '30-60', '>60', 'silly', 'happy', 'tired', 'friendsVisiting','kidsPlaying', 'atHome', 'snacks']
+the attribute %s plays the most important role that have coeffecient %d
+    """%(math_d,attribute[max_index][0][0],wmax)
+)
 
 Q_c(x_train,x_test,acc,attribute,x)
 
@@ -164,11 +164,15 @@ def subplotaccuracy(acc,axes,fig,i,title,xx):
     axes[x, y].set_title(title)
 
 # ablation test
-fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(8, 8))
-def ablation(x_train,x_test):
-    print("d)")
+def ablation(x_train,x_test,isprint):
+    if isprint:
+        fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(8, 8))
+        print("d)")
+    min =100
+    amin = 9
     for i in range(8):
         acc = [[],[],[],[]]
+
         if i*3 <12:
             x_trim1 = [x[0:(i)*3+1]+x[(i+1)*3+1:] for x in x_train]
             x_trim2 = [x[0:(i)*3+1]+x[(i+1)*3+1:] for x in x_test]
@@ -180,16 +184,54 @@ def ablation(x_train,x_test):
             x_trim2 = [x[0:9+i]for x in x_train]
         w = np.zeros([len(x_trim1[0])])
         t = np.zeros([len(x_trim2[0])])
-        acc,w,ta,xx = iteration(x_trim1,x_trim2,250)
-        print("without attribute",attribute[i+1][0],"accuracy:",acc[3][-1])
-        subplotaccuracy(acc,axes,fig,i,"Give out %s %s"%("attribute",attribute[i+1][0][0]),xx)
-    fig.tight_layout()
-    plt.show()
+        acc,w,ta,xx = iteration(x_trim1,x_trim2,250,np.zeros([len(x_trim1[0])]))
+        if acc[3][-1]<min:
+            min = acc[3][-1]
+            att = i+1
+        if isprint:
+            print("without attribute",attribute[i+1][0],"accuracy:",acc[3][-1])
+            subplotaccuracy(acc,axes,fig,i,"Give out %s %s"%("attribute",attribute[i+1][0][0]),xx)
 
-ablation(x_train,x_test)
+    if isprint:
+        print("the most important attribute according to ablation is",attribute[att][0])
+        fig.tight_layout()
+        plt.show()
+    else:
+        return attribute[att][0]
 
+ablation(x_train,x_test,True)
+
+"""
+#experiment on the question e. With w set to be number randomly sample from N(0,1)
+# the result shows weights method is more stable
+def Q_e(x_train,x_test,attribute,times):
+    a1 = []
+    a2 = []
+    for j in range(times):
+        acc,w,ta,x = iteration(x_train,x_test,250,np.random.randn(len(x_train[0])))
+        wmax = 0
+        max_index = 0
+        X = ["x0",'Weekday', 'Saturday', 'Sunday', 'morning', 'afternoon', 'evening','<30', '30-60', '>60', 'silly', 'happy', 'tired', 'friendsVisiting','kidsPlaying', 'atHome', 'snacks']
+        for i in range(len(ta)):
+            if i ==0:
+                pos = i
+            elif 11>i >0:
+                pos = int((i+1)/3)
+            else:
+                pos = int((i-7))
+            if abs(ta[i])>wmax:
+                max_index=pos
+                wmax = ta[i]
+        a1.append(attribute[max_index][0])
+        a2.append(ablation(x_train,x_test,False))
+    print(a1)
+    print(a2)
+    return a1,a2
+
+a1,a2 = Q_e(x_train,x_test,attribute,50)
+"""
 print("""
-e) Examine the weights is better because it's more easy to find out the most important attribute than ablation test, with more efficiency and accuracy. Also if the weights are close on the influential attributes it's hard to figure out just by ablation test. Simply comparing different accuracy by ablation test is not fair because with different attributes the models are different.
 
+e) No matter how many experiment. The weights method have a stable result which is all mood. The ablation test method will sometimes produce different result. Also if the weights are close on the influential attributes, there would be equally most important attribute. In the ablation test method with different attributes the models are totally different. Simply compare their accuracy is not fair and effective.While on the weights method the comparison is under the same model which is more fair and accurate. So examine the weights is better.
 f) The averaged model should be better because it generalize better to test data than the final train model.
 """)
