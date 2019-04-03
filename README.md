@@ -1,2 +1,7 @@
 # project
-project of Hackohio, CSE 5331, CSE 5522
+my course project
+Hackohio
+cse 5522
+cse 5331
+cse 5243
+cse 5539
