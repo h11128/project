@@ -1,7 +1,2 @@
 # project
-my course project
-Hackohio
-cse 5522
-cse 5331
-cse 5243
-cse 5539
+any project I have done in OSU
